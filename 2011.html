@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chúc Mừng 20/11 - Ngày Nhà Giáo Việt Nam</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            position: relative;
+            height: 100vh;
+        }
+
+        /* Canvas for particles */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Loading screen */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.8s;
+        }
+
+        .loading.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-title {
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .loading-text {
+            color: rgba(255,255,255,0.9);
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255,255,255,0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Container for falling items */
+        .falling-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* Falling images */
+        .falling-item {
+            position: absolute;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.4);
+            opacity: 0;
+            animation: fallAndFade linear forwards;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .falling-item.video {
+            border: 3px solid rgba(255, 215, 0, 0.7);
+        }
+
+        @keyframes fallAndFade {
+            0% {
+                transform: translateY(-100%) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) rotate(var(--rotation, 15deg));
+                opacity: 0;
+            }
+        }
+
+        /* Floating messages */
+        .message {
+            position: absolute;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 
+                0 0 10px rgba(255, 255, 255, 0.8),
+                0 0 20px currentColor,
+                0 0 30px currentColor,
+                2px 2px 4px rgba(0,0,0,0.5);
+            white-space: nowrap;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            animation: messageFloat linear forwards;
+            z-index: 3;
+        }
+
+        @keyframes messageFloat {
+            0% {
+                transform: translateY(-100px) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) translateX(var(--drift, 0px)) rotate(var(--msg-rotation, 0deg));
+                opacity: 0;
+            }
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Music toggle */
+        .music-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 26px;
+            z-index: 10;
+            pointer-events: auto;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .music-toggle:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* Info panel */
+        .info-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-size: 15px;
+            z-index: 10;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-panel .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .message {
+                font-size: 16px;
+                padding: 8px 16px;
+            }
+
+            .btn {
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+
+            .controls {
+                bottom: 20px;
+                gap: 10px;
+            }
+
+            .loading-title {
+                font-size: 28px;
+            }
+
+            .info-panel {
+                font-size: 13px;
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="loading-title">🎓 Chúc Mừng 20/11 🎓</div>
+            <div class="loading-text" id="loadingText">Đang chuẩn bị kỷ niệm... 0%</div>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- Particles Canvas -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Falling Container -->
+    <div class="falling-container" id="fallingContainer"></div>
+
+    <!-- Info Panel -->
+    <div class="info-panel">
+        <div class="title">Ngày Nhà Giáo Việt Nam</div>
+        <div>20/11 - <span id="activeCount">0</span> kỷ niệm đang bay</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="btn" onclick="changeSpeed(-1)">🐢 Chậm hơn</button>
+        <button class="btn" onclick="toggleEffect()">⏯️ <span id="status">Tạm dừng</span></button>
+        <button class="btn" onclick="changeSpeed(1)">🚀 Nhanh hơn</button>
+    </div>
+
+    <!-- Music Toggle -->
+    <div class="music-toggle" id="musicToggle" onclick="toggleMusic()">🔊</div>
+
+    <script>
+        // Configuration
+        let effectActive = true;
+        let speedMultiplier = 1;
+        let activeItems = [];
+        
+        // Images embedded directly (no need for JSON file)
+        let images = [
+            "Image/7242082515803.mp4",
+            "Image/7242092001230.mp4",
+            "Image/7242092329228.mp4",
+            "Image/z7242079153060_13a19416b548923516ddb682e6cd5e82.jpg",
+            "Image/z7242079155181_dd1c814ba89fe665be9eca46580b4d3a.jpg",
+            "Image/z7242079165332_56b7fa8e4f366bbfe24cebde9707247b.jpg",
+            "Image/z7242079169326_48273b5648a15f8957eecb3382886642.jpg",
+            "Image/z7242079172273_f933d32a9b12f66c468f950c9c76b380.jpg",
+            "Image/z7242079180508_bd6bcc6faa25a1cff065ae02173b30b4.jpg",
+            "Image/z7242079185006_ae1877d5be21fe40d0960605a67fef1b.jpg",
+            "Image/z7242079190195_436df6c6ff7802b103ead57aa1c2cf67.jpg",
+            "Image/z7242079199016_e0e7f83a3aa72af15171372d15d02e00.jpg",
+            "Image/z7242079208720_923796dbb52c4d81c35609542646d516.jpg",
+            "Image/z7242079210776_e2e5d91b6353c978598fd902a14281ef.jpg",
+            "Image/z7242079220744_347d3c475908b0a6c4b515192e8b9481.jpg",
+            "Image/z7242079223518_6457eac9b21c28970151f40ee6a97044.jpg",
+            "Image/z7242079233227_101121dcf2326c4df1f2b109652e0975.jpg",
+            "Image/z7242079236333_19d861eaaf876a532ba18bae19973f33.jpg",
+            "Image/z7242082835079_22fc2d0a4e52a3e3434296ef0c11601c.jpg",
+            "Image/z7242083240835_794d4b3ef12633827b92ae86aa7a2cfc.jpg",
+            "Image/z7242083676617_95cd5628423f31c1e65cfbc0c045858c.jpg",
+            "Image/z7242083843828_0672d327642b83f1a4c2800a0bc1acf6.jpg",
+            "Image/z7242084390836_f7c522e12906908bf8fed23153f0584c.jpg",
+            "Image/z7242088908925_d2f573da4e2658af15ac76e5844e8956.jpg",
+            "Image/z7242089671940_7aa1e4030ca1cf0ff87a5bf0e5f68159.jpg",
+            "Image/z7242090212383_a658c14a3e40cae0d5644328a5d39632.jpg",
+            "Image/z7242094116829_f4e7dffce52d10f3f4ea168dfa8fe9f0.jpg",
+            "Image/z7242094282266_bf81a5044590aab7bfc8f0df15f49276.jpg"
+        ];
+        let imagesLoaded = false;
+
+        // Messages for 20/11
+        const messages = [
+            'Chúc thầy cô sức khỏe dồi dào 💪',
+            'Tri ân thầy cô 🙏',
+            'Ngày 20/11 vui vẻ 🎉',
+            'Cảm ơn thầy cô đã dạy dỗ 📚',
+            'Thầy cô mãi trong tim em ❤️',
+            'Chúc thầy cô hạnh phúc 🌸',
+            'Kính chúc thầy cô 🎓',
+            'Mãi là học trò của thầy cô 👨‍🎓',
+            'Chúc thầy cô thành công 🏆',
+            'Thầy cô là ánh sáng dẫn đường ✨',
+            'Ngày nhà giáo Việt Nam 20/11 🇻🇳',
+            'Em yêu thầy cô 💖',
+            'Cảm ơn vì mọi điều 🌟',
+            'Thầy cô tuyệt vời nhất 🌈',
+            'Chúc thầy cô luôn vui vẻ 😊'
+        ];
+
+        // Colors
+        const colors = [
+            '#FF1493', '#00CED1', '#FFD700', '#FF69B4', 
+            '#00FF00', '#FF4500', '#9370DB', '#00FFFF',
+            '#FFA500', '#FF00FF', '#32CD32', '#FF6347'
+        ];
+
+        // Load images (now using embedded data, but keep for compatibility)
+        async function loadImages() {
+            console.log('Images already embedded:', images.length);
+            
+            // Skip preloading, just hide loading and start
+            hideLoading();
+        }
+
+        function hideLoading() {
+            imagesLoaded = true;
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hide');
+                startEffect();
+            }, 500);
+        }
+
+        // Start the effect
+        function startEffect() {
+            console.log('Starting effect with', images.length, 'images');
+            
+            // Create first batch immediately for testing
+            if (images.length > 0) {
+                createFallingImage();
+                createFallingImage();
+                createFallingImage();
+            }
+            createFloatingMessage();
+            createFloatingMessage();
+            
+            // Create falling images
+            setInterval(() => {
+                if (effectActive && images.length > 0) {
+                    createFallingImage();
+                }
+            }, 1200 / speedMultiplier); // Every 1.2s adjusted by speed
+
+            // Create floating messages
+            setInterval(() => {
+                if (effectActive) {
+                    createFloatingMessage();
+                }
+            }, 2000 / speedMultiplier); // Every 2s adjusted by speed
+        }
+
+        // Create falling image
+        function createFallingImage() {
+            if (images.length === 0) {
+                console.warn('No images available');
+                return;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * images.length);
+            const src = images[randomIndex];
+            const isVideo = src.toLowerCase().endsWith('.mp4') || src.toLowerCase().endsWith('.webm');
+            
+            console.log('Creating falling item:', src);
+            
+            const element = isVideo ? document.createElement('video') : document.createElement('img');
+            element.className = 'falling-item';
+            if (isVideo) {
+                element.classList.add('video');
+                element.autoplay = true;
+                element.loop = true;
+                element.muted = true;
+                element.playsInline = true;
+            }
+            element.src = src;
+            
+            // Error handling
+            element.onerror = () => {
+                console.error('Failed to load:', src);
+            };
+            element.onload = element.onloadeddata = () => {
+                console.log('Successfully loaded:', src);
+            };
+
+            // Random properties
+            const size = Math.random() * 80 + 100; // 100-180px
+            const leftPos = Math.random() * (window.innerWidth - size);
+            const duration = (Math.random() * 6 + 10) / speedMultiplier; // 10-16s
+            const rotation = Math.random() * 30 - 15; // -15 to 15deg
+            const delay = Math.random() * 0.5;
+
+            element.style.width = size + 'px';
+            element.style.height = size + 'px';
+            element.style.left = leftPos + 'px';
+            element.style.top = '-200px';
+            element.style.animationDuration = duration + 's';
+            element.style.animationDelay = delay + 's';
+            element.style.setProperty('--rotation', rotation + 'deg');
+
+            document.getElementById('fallingContainer').appendChild(element);
+            activeItems.push(element);
+            updateCount();
+
+            // Remove after animation
+            setTimeout(() => {
+                element.remove();
+                activeItems = activeItems.filter(item => item !== element);
+                updateCount();
+            }, (duration + delay) * 1000);
+        }
+
+        // Create floating message
+        function createFloatingMessage() {
+            const msg = document.createElement('div');
+            msg.className = 'message';
+            msg.textContent = messages[Math.floor(Math.random() * messages.length)];
+            msg.style.color = colors[Math.floor(Math.random() * colors.length)];
+
+            // Random properties
+            const leftPos = Math.random() * (window.innerWidth - 300);
+            const duration = (Math.random() * 6 + 12) / speedMultiplier; // 12-18s (slower than images)
+            const drift = Math.random() * 200 - 100; // -100 to 100px horizontal drift
+            const rotation = Math.random() * 10 - 5; // -5 to 5deg
+            const delay = Math.random() * 0.5;
+
+            msg.style.left = leftPos + 'px';
+            msg.style.top = '-100px';
+            msg.style.animationDuration = duration + 's';
+            msg.style.animationDelay = delay + 's';
+            msg.style.setProperty('--drift', drift + 'px');
+            msg.style.setProperty('--msg-rotation', rotation + 'deg');
+
+            document.getElementById('fallingContainer').appendChild(msg);
+            activeItems.push(msg);
+            updateCount();
+
+            // Remove after animation
+            setTimeout(() => {
+                msg.remove();
+                activeItems = activeItems.filter(item => item !== msg);
+                updateCount();
+            }, (duration + delay) * 1000);
+        }
+
+        function updateCount() {
+            document.getElementById('activeCount').textContent = activeItems.length;
+        }
+
+        // Particles background
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        for (let i = 0; i < 100; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 3 + 1,
+                speedX: Math.random() * 0.5 - 0.25,
+                speedY: Math.random() * 0.5 - 0.25,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            });
+        }
+
+        function animateParticles() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.x += p.speedX;
+                p.y += p.speedY;
+
+                if (p.x > canvas.width) p.x = 0;
+                if (p.x < 0) p.x = canvas.width;
+                if (p.y > canvas.height) p.y = 0;
+                if (p.y < 0) p.y = canvas.height;
+
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // Controls
+        function toggleEffect() {
+            effectActive = !effectActive;
+            document.getElementById('status').textContent = effectActive ? 'Tạm dừng' : 'Tiếp tục';
+        }
+
+        function changeSpeed(direction) {
+            speedMultiplier = Math.max(0.3, Math.min(2.5, speedMultiplier + direction * 0.2));
+        }
+
+        // Music
+        let musicPlayer = null;
+        function toggleMusic() {
+            const toggle = document.getElementById('musicToggle');
+            
+            if (!musicPlayer) {
+                musicPlayer = document.createElement('iframe');
+                musicPlayer.style.display = 'none';
+                musicPlayer.allow = 'autoplay';
+                musicPlayer.src = 'https://www.youtube.com/embed/eP4lquNW3So?autoplay=1&loop=1&playlist=eP4lquNW3So';
+                document.body.appendChild(musicPlayer);
+                toggle.textContent = '🔊';
+            } else {
+                document.body.removeChild(musicPlayer);
+                musicPlayer = null;
+                toggle.textContent = '🔇';
+            }
+        }
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Initialize
+        loadImages();
+    </script>
+</body>
+</html>
